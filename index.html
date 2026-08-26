@@ -6,10 +6,14 @@
 
   <title>Distribution GP — Carte des concessionnaires</title>
 
+  <!-- Leaflet -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
   />
+
+  <!-- Microsoft Authentication Library -->
+  <script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
 
   <style>
     html, body {
@@ -18,10 +22,94 @@
       font-family: Arial, sans-serif;
     }
 
+    body {
+      overflow: hidden;
+    }
+
     #map {
       height: 100vh;
       width: 100%;
     }
+
+    /* --------------------------------------------------
+       PANNEAU DE CONTRÔLE
+    -------------------------------------------------- */
+
+    .controls {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      z-index: 1000;
+
+      width: 320px;
+      max-width: calc(100vw - 30px);
+
+      background: white;
+      padding: 16px;
+
+      border-radius: 10px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+    }
+
+    .controls h2 {
+      margin: 0 0 12px 0;
+      font-size: 19px;
+    }
+
+    .controls label {
+      display: block;
+      font-size: 12px;
+      font-weight: bold;
+      margin-top: 9px;
+      margin-bottom: 4px;
+    }
+
+    .controls input,
+    .controls select {
+      width: 100%;
+      box-sizing: border-box;
+
+      padding: 9px;
+
+      border: 1px solid #ccc;
+      border-radius: 6px;
+
+      font-size: 14px;
+    }
+
+    .controls button {
+      width: 100%;
+      margin-top: 10px;
+
+      padding: 9px;
+
+      border: none;
+      border-radius: 6px;
+
+      cursor: pointer;
+
+      font-size: 14px;
+    }
+
+    .btn-primary {
+      background: #1f6feb;
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #eeeeee;
+      color: #222;
+    }
+
+    .status {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #555;
+    }
+
+    /* --------------------------------------------------
+       LÉGENDE
+    -------------------------------------------------- */
 
     .legend {
       background: white;
@@ -39,10 +127,32 @@
       border-radius: 50%;
     }
 
+    /* --------------------------------------------------
+       POPUP
+    -------------------------------------------------- */
+
     .popup-title {
-      font-size: 16px;
+      font-size: 17px;
       font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .popup-section {
       margin-bottom: 8px;
+    }
+
+    .popup-label {
+      font-weight: bold;
+    }
+
+    /* --------------------------------------------------
+       COMPTEUR
+    -------------------------------------------------- */
+
+    .counter {
+      margin-top: 10px;
+      font-size: 13px;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -51,81 +161,192 @@
 
 <div id="map"></div>
 
+<div class="controls">
+
+  <h2>Distribution GP</h2>
+
+  <label for="search">
+    Recherche
+  </label>
+
+  <input
+    type="text"
+    id="search"
+    placeholder="Concessionnaire ou adresse..."
+  >
+
+  <label for="groupe">
+    Groupe
+  </label>
+
+  <select id="groupe">
+    <option value="">Tous les groupes</option>
+  </select>
+
+  <label for="statut">
+    Statut
+  </label>
+
+  <select id="statut">
+    <option value="">Tous les statuts</option>
+  </select>
+
+  <button
+    class="btn-secondary"
+    id="resetFilters"
+  >
+    Réinitialiser les filtres
+  </button>
+
+  <button
+    class="btn-secondary"
+    id="fitMap"
+  >
+    Afficher tous les concessionnaires
+  </button>
+
+  <div class="counter" id="counter">
+    Chargement...
+  </div>
+
+  <div class="status" id="status">
+    Connexion à Microsoft 365...
+  </div>
+
+</div>
+
+<!-- Leaflet -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
 
-  // --------------------------------------------------
-  // DONNÉES DE TEST
-  // --------------------------------------------------
+  // ==================================================
+  // CONFIGURATION MICROSOFT
+  // ==================================================
 
-  const concessionnaires = [
+  const CLIENT_ID =
+    "d6c9bd33-1318-4052-8a82-66e70ea9f386";
 
-    {
-      nom: "Garage Montréal",
-      groupe: "Groupe Exemple",
-      adresse: "1234 Rue Sainte-Catherine, Montréal, QC",
-      contact: "Jean Tremblay",
-      notes: "Premier contact à effectuer",
-      statut: "À venir",
-      latitude: 45.5017,
-      longitude: -73.5673
+  const TENANT_ID =
+    "e64463ac-e97e-4259-9af9-eb6f999c1a60";
+
+  const SHAREPOINT_HOST =
+    "distributiongp403.sharepoint.com";
+
+  const SHAREPOINT_SITE_PATH =
+    "/sites/DISTRIBUTIONGP";
+
+  const SHAREPOINT_LIST_NAME =
+    "Concessionnaires";
+
+
+  // ==================================================
+  // INITIALISATION MSAL
+  // ==================================================
+
+  const msalConfig = {
+
+    auth: {
+      clientId: CLIENT_ID,
+      authority:
+        "https://login.microsoftonline.com/" + TENANT_ID,
+
+      redirectUri:
+        window.location.origin + "/"
     },
 
-    {
-      nom: "Auto Québec",
-      groupe: "Groupe Exemple",
-      adresse: "2500 Boulevard Laurier, Québec, QC",
-      contact: "Marie Gagnon",
-      notes: "Déjà rencontré",
-      statut: "Déjà approché",
-      latitude: 46.7784,
-      longitude: -71.2733
-    },
-
-    {
-      nom: "Garage Laval",
-      groupe: "Groupe Exemple",
-      adresse: "1600 Boulevard Saint-Martin, Laval, QC",
-      contact: "Pierre Roy",
-      notes: "Client actif",
-      statut: "Déjà client",
-      latitude: 45.5689,
-      longitude: -73.6920
+    cache: {
+      cacheLocation: "sessionStorage",
+      storeAuthStateInCookie: false
     }
 
-  ];
+  };
 
 
-  // --------------------------------------------------
+  const msalInstance =
+    new msal.PublicClientApplication(msalConfig);
+
+
+  const loginRequest = {
+
+    scopes: [
+      "Sites.Read.All"
+    ]
+
+  };
+
+
+  // ==================================================
+  // VARIABLES
+  // ==================================================
+
+  let concessionnaires = [];
+
+  let markersLayer =
+    L.layerGroup();
+
+
+  // ==================================================
   // CARTE
-  // --------------------------------------------------
+  // ==================================================
 
-  const map = L.map('map').setView([45.55, -73.5], 8);
+  const map =
+    L.map("map").setView(
+      [45.55, -73.5],
+      8
+    );
+
 
   L.tileLayer(
-    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
     {
-      attribution: '&copy; OpenStreetMap contributors'
+      attribution:
+        "&copy; OpenStreetMap contributors"
     }
   ).addTo(map);
 
 
-  // --------------------------------------------------
-  // COULEUR SELON LE STATUT
-  // --------------------------------------------------
+  markersLayer.addTo(map);
+
+
+  // ==================================================
+  // COULEUR DES STATUTS
+  // ==================================================
 
   function couleurStatut(statut) {
 
-    if (statut === "Déjà client") {
+    if (!statut) {
+      return "#7f8c8d";
+    }
+
+    const s =
+      String(statut).toLowerCase();
+
+    if (
+      s.includes("déjà client") ||
+      s.includes("deja client")
+    ) {
       return "#2ecc71";
     }
 
-    if (statut === "Déjà approché") {
+    if (
+      s.includes("déjà approché") ||
+      s.includes("deja approche")
+    ) {
       return "#f39c12";
     }
 
-    if (statut === "À venir") {
+    if (
+      s.includes("client mpp") ||
+      s.includes("balcan")
+    ) {
+      return "#9b59b6";
+    }
+
+    if (
+      s.includes("à venir") ||
+      s.includes("a venir")
+    ) {
       return "#3498db";
     }
 
@@ -133,86 +354,835 @@
   }
 
 
-  // --------------------------------------------------
-  // MARQUEURS
-  // --------------------------------------------------
+  // ==================================================
+  // OBTENIR UNE VALEUR DE CHAMP SHAREPOINT
+  // ==================================================
 
-  concessionnaires.forEach(function(c) {
+  function getField(fields, possibleNames) {
 
-    const couleur = couleurStatut(c.statut);
+    if (!fields) {
+      return "";
+    }
 
-    const icone = L.divIcon({
-      className: "",
-      html:
-        `<div style="
-          width:18px;
-          height:18px;
-          background:${couleur};
-          border:3px solid white;
-          border-radius:50%;
-          box-shadow:0 1px 5px rgba(0,0,0,0.5);
-        "></div>`,
-      iconSize: [24, 24],
-      iconAnchor: [12, 12]
+    const keys =
+      Object.keys(fields);
+
+    for (const name of possibleNames) {
+
+      if (fields[name] !== undefined) {
+        return fields[name];
+      }
+
+    }
+
+    // Recherche insensible à la casse
+    for (const key of keys) {
+
+      const normalizedKey =
+        key
+          .toLowerCase()
+          .replace(/[\s_-]/g, "");
+
+      for (const name of possibleNames) {
+
+        const normalizedName =
+          name
+            .toLowerCase()
+            .replace(/[\s_-]/g, "");
+
+        if (
+          normalizedKey === normalizedName
+        ) {
+          return fields[key];
+        }
+
+      }
+
+    }
+
+    return "";
+  }
+
+
+  // ==================================================
+  // TRANSFORMER UN ÉLÉMENT SHAREPOINT
+  // ==================================================
+
+  function convertirConcessionnaire(item) {
+
+    const fields =
+      item.fields || {};
+
+    return {
+
+      id:
+        item.id,
+
+      nom:
+        getField(
+          fields,
+          [
+            "Concessionnaire",
+            "Title",
+            "Nom"
+          ]
+        ),
+
+      groupe:
+        getField(
+          fields,
+          [
+            "Groupe"
+          ]
+        ),
+
+      adresse:
+        getField(
+          fields,
+          [
+            "Adresse"
+          ]
+        ),
+
+      contact:
+        getField(
+          fields,
+          [
+            "Contact"
+          ]
+        ),
+
+      notes:
+        getField(
+          fields,
+          [
+            "Notes"
+          ]
+        ),
+
+      statut:
+        getField(
+          fields,
+          [
+            "Statut"
+          ]
+        ),
+
+      longitude:
+        parseFloat(
+          getField(
+            fields,
+            [
+              "Longitude"
+            ]
+          )
+        ),
+
+      latitude:
+        parseFloat(
+          getField(
+            fields,
+            [
+              "Latitude"
+            ]
+          )
+        )
+
+    };
+
+  }
+
+
+  // ==================================================
+  // AUTHENTIFICATION
+  // ==================================================
+
+  async function obtenirToken() {
+
+    const comptes =
+      msalInstance.getAllAccounts();
+
+    if (comptes.length === 0) {
+
+      document.getElementById("status").textContent =
+        "Connexion Microsoft 365 requise...";
+
+      await msalInstance.loginRedirect(
+        loginRequest
+      );
+
+      return null;
+
+    }
+
+    const compte =
+      comptes[0];
+
+    try {
+
+      const response =
+        await msalInstance.acquireTokenSilent({
+
+          ...loginRequest,
+
+          account: compte
+
+        });
+
+      return response.accessToken;
+
+    }
+    catch (error) {
+
+      console.log(
+        "Token silencieux impossible:",
+        error
+      );
+
+      await msalInstance.acquireTokenRedirect(
+        loginRequest
+      );
+
+      return null;
+
+    }
+
+  }
+
+
+  // ==================================================
+  // RÉCUPÉRER LE SITE SHAREPOINT
+  // ==================================================
+
+  async function obtenirSite(token) {
+
+    const url =
+      "https://graph.microsoft.com/v1.0/sites/" +
+      SHAREPOINT_HOST +
+      ":" +
+      SHAREPOINT_SITE_PATH;
+
+    const response =
+      await fetch(
+        url,
+        {
+          headers: {
+            Authorization:
+              "Bearer " + token
+          }
+        }
+      );
+
+    if (!response.ok) {
+
+      const texte =
+        await response.text();
+
+      throw new Error(
+        "Impossible de récupérer le site SharePoint: " +
+        response.status +
+        " " +
+        texte
+      );
+
+    }
+
+    return await response.json();
+
+  }
+
+
+  // ==================================================
+  // RÉCUPÉRER LA LISTE
+  // ==================================================
+
+  async function obtenirListe(
+    token,
+    siteId
+  ) {
+
+    const url =
+      "https://graph.microsoft.com/v1.0/sites/" +
+      encodeURIComponent(siteId) +
+      "/lists/" +
+      encodeURIComponent(SHAREPOINT_LIST_NAME) +
+      "/items?expand=fields&$top=999";
+
+    const response =
+      await fetch(
+        url,
+        {
+          headers: {
+            Authorization:
+              "Bearer " + token
+          }
+        }
+      );
+
+    if (!response.ok) {
+
+      const texte =
+        await response.text();
+
+      throw new Error(
+        "Impossible de récupérer la liste SharePoint: " +
+        response.status +
+        " " +
+        texte
+      );
+
+    }
+
+    return await response.json();
+
+  }
+
+
+  // ==================================================
+  // CHARGER LES CONCESSIONNAIRES
+  // ==================================================
+
+  async function chargerConcessionnaires() {
+
+    try {
+
+      document.getElementById("status").textContent =
+        "Connexion à Microsoft 365...";
+
+      const token =
+        await obtenirToken();
+
+      if (!token) {
+        return;
+      }
+
+
+      document.getElementById("status").textContent =
+        "Recherche du site SharePoint...";
+
+
+      const site =
+        await obtenirSite(token);
+
+
+      document.getElementById("status").textContent =
+        "Chargement des concessionnaires...";
+
+
+      const data =
+        await obtenirListe(
+          token,
+          site.id
+        );
+
+
+      concessionnaires =
+        (data.value || [])
+          .map(convertirConcessionnaire)
+          .filter(function(c) {
+
+            return (
+              Number.isFinite(c.latitude) &&
+              Number.isFinite(c.longitude)
+            );
+
+          });
+
+
+      remplirFiltres();
+
+      afficherConcessionnaires();
+
+      document.getElementById("status").textContent =
+        "Données SharePoint chargées.";
+
+    }
+    catch (error) {
+
+      console.error(error);
+
+      document.getElementById("status").innerHTML =
+        "<b>Erreur :</b> " +
+        error.message;
+
+    }
+
+  }
+
+
+  // ==================================================
+  // REMPLIR LES FILTRES
+  // ==================================================
+
+  function remplirFiltres() {
+
+    const groupeSelect =
+      document.getElementById("groupe");
+
+    const statutSelect =
+      document.getElementById("statut");
+
+
+    // Nettoyer
+    groupeSelect.innerHTML =
+      '<option value="">Tous les groupes</option>';
+
+    statutSelect.innerHTML =
+      '<option value="">Tous les statuts</option>';
+
+
+    // GROUPES
+    const groupes =
+      [
+        ...new Set(
+          concessionnaires
+            .map(c => c.groupe)
+            .filter(Boolean)
+        )
+      ]
+      .sort();
+
+
+    groupes.forEach(function(groupe) {
+
+      const option =
+        document.createElement("option");
+
+      option.value =
+        groupe;
+
+      option.textContent =
+        groupe;
+
+      groupeSelect.appendChild(option);
+
     });
 
 
-    const popup = `
-      <div class="popup-title">
-        ${c.nom} (${c.groupe})
-      </div>
-
-      <b>Adresse</b><br>
-      ${c.adresse}<br><br>
-
-      <b>Contact</b><br>
-      ${c.contact}<br><br>
-
-      <b>Notes</b><br>
-      ${c.notes}<br><br>
-
-      <b>Statut</b><br>
-      ${c.statut}
-    `;
+    // STATUTS
+    const statuts =
+      [
+        ...new Set(
+          concessionnaires
+            .map(c => c.statut)
+            .filter(Boolean)
+        )
+      ]
+      .sort();
 
 
-    L.marker(
-      [c.latitude, c.longitude],
-      { icon: icone }
-    )
-    .addTo(map)
-    .bindPopup(popup);
+    statuts.forEach(function(statut) {
 
-  });
+      const option =
+        document.createElement("option");
+
+      option.value =
+        statut;
+
+      option.textContent =
+        statut;
+
+      statutSelect.appendChild(option);
+
+    });
+
+  }
 
 
-  // --------------------------------------------------
+  // ==================================================
+  // FILTRER
+  // ==================================================
+
+  function obtenirFiltres() {
+
+    return {
+
+      recherche:
+        document
+          .getElementById("search")
+          .value
+          .toLowerCase()
+          .trim(),
+
+      groupe:
+        document
+          .getElementById("groupe")
+          .value,
+
+      statut:
+        document
+          .getElementById("statut")
+          .value
+
+    };
+
+  }
+
+
+  function concessionnaireCorrespond(c, filtres) {
+
+    const texte =
+      (
+        (c.nom || "") +
+        " " +
+        (c.adresse || "") +
+        " " +
+        (c.contact || "")
+      )
+      .toLowerCase();
+
+
+    if (
+      filtres.recherche &&
+      !texte.includes(filtres.recherche)
+    ) {
+      return false;
+    }
+
+
+    if (
+      filtres.groupe &&
+      c.groupe !== filtres.groupe
+    ) {
+      return false;
+    }
+
+
+    if (
+      filtres.statut &&
+      c.statut !== filtres.statut
+    ) {
+      return false;
+    }
+
+
+    return true;
+
+  }
+
+
+  // ==================================================
+  // AFFICHER LES MARQUEURS
+  // ==================================================
+
+  function afficherConcessionnaires() {
+
+    markersLayer.clearLayers();
+
+
+    const filtres =
+      obtenirFiltres();
+
+
+    const visibles =
+      concessionnaires.filter(
+        c =>
+          concessionnaireCorrespond(
+            c,
+            filtres
+          )
+      );
+
+
+    visibles.forEach(function(c) {
+
+      const couleur =
+        couleurStatut(c.statut);
+
+
+      const icone =
+        L.divIcon({
+
+          className: "",
+
+          html:
+            `<div style="
+              width:18px;
+              height:18px;
+              background:${couleur};
+              border:3px solid white;
+              border-radius:50%;
+              box-shadow:0 1px 5px rgba(0,0,0,0.5);
+            "></div>`,
+
+          iconSize:
+            [24, 24],
+
+          iconAnchor:
+            [12, 12]
+
+        });
+
+
+      const popup = `
+
+        <div class="popup-title">
+          ${escapeHtml(c.nom)}
+        </div>
+
+        <div class="popup-section">
+          <span class="popup-label">
+            Groupe
+          </span><br>
+          ${escapeHtml(c.groupe)}
+        </div>
+
+        <div class="popup-section">
+          <span class="popup-label">
+            Adresse
+          </span><br>
+          ${escapeHtml(c.adresse)}
+        </div>
+
+        <div class="popup-section">
+          <span class="popup-label">
+            Contact
+          </span><br>
+          ${escapeHtml(c.contact)}
+        </div>
+
+        <div class="popup-section">
+          <span class="popup-label">
+            Notes
+          </span><br>
+          ${escapeHtml(c.notes)}
+        </div>
+
+        <div class="popup-section">
+          <span class="popup-label">
+            Statut
+          </span><br>
+          <b style="color:${couleur}">
+            ${escapeHtml(c.statut)}
+          </b>
+        </div>
+
+      `;
+
+
+      L.marker(
+        [
+          c.latitude,
+          c.longitude
+        ],
+        {
+          icon: icone
+        }
+      )
+      .addTo(markersLayer)
+      .bindPopup(popup);
+
+    });
+
+
+    document.getElementById("counter").textContent =
+      visibles.length +
+      " concessionnaire(s) affiché(s)";
+
+
+    // Ajuster la carte
+    if (visibles.length > 0) {
+
+      const bounds =
+        L.latLngBounds(
+          visibles.map(c => [
+            c.latitude,
+            c.longitude
+          ])
+        );
+
+      map.fitBounds(
+        bounds,
+        {
+          padding: [40, 40]
+        }
+      );
+
+    }
+
+  }
+
+
+  // ==================================================
+  // PROTECTION CONTRE HTML DANS LES DONNÉES
+  // ==================================================
+
+  function escapeHtml(value) {
+
+    if (
+      value === null ||
+      value === undefined
+    ) {
+      return "";
+    }
+
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+
+  }
+
+
+  // ==================================================
+  // ÉVÉNEMENTS
+  // ==================================================
+
+  document
+    .getElementById("search")
+    .addEventListener(
+      "input",
+      afficherConcessionnaires
+    );
+
+
+  document
+    .getElementById("groupe")
+    .addEventListener(
+      "change",
+      afficherConcessionnaires
+    );
+
+
+  document
+    .getElementById("statut")
+    .addEventListener(
+      "change",
+      afficherConcessionnaires
+    );
+
+
+  document
+    .getElementById("resetFilters")
+    .addEventListener(
+      "click",
+      function() {
+
+        document.getElementById("search").value = "";
+        document.getElementById("groupe").value = "";
+        document.getElementById("statut").value = "";
+
+        afficherConcessionnaires();
+
+      }
+    );
+
+
+  document
+    .getElementById("fitMap")
+    .addEventListener(
+      "click",
+      function() {
+
+        const filtres =
+          obtenirFiltres();
+
+        const visibles =
+          concessionnaires.filter(
+            c =>
+              concessionnaireCorrespond(
+                c,
+                filtres
+              )
+          );
+
+        if (visibles.length === 0) {
+          return;
+        }
+
+        const bounds =
+          L.latLngBounds(
+            visibles.map(c => [
+              c.latitude,
+              c.longitude
+            ])
+          );
+
+        map.fitBounds(
+          bounds,
+          {
+            padding: [40, 40]
+          }
+        );
+
+      }
+    );
+
+
+  // ==================================================
   // LÉGENDE
-  // --------------------------------------------------
+  // ==================================================
 
-  const legend = L.control({ position: 'bottomright' });
+  const legend =
+    L.control({
+      position: "bottomright"
+    });
 
-  legend.onAdd = function() {
 
-    const div = L.DomUtil.create('div', 'legend');
+  legend.onAdd =
+    function() {
 
-    div.innerHTML = `
-      <b>Statut</b><br>
+      const div =
+        L.DomUtil.create(
+          "div",
+          "legend"
+        );
 
-      <i style="background:#2ecc71"></i>
-      Déjà client<br>
 
-      <i style="background:#f39c12"></i>
-      Déjà approché<br>
+      div.innerHTML = `
 
-      <i style="background:#3498db"></i>
-      À venir
-    `;
+        <b>Statut</b><br>
 
-    return div;
-  };
+        <i style="background:#2ecc71"></i>
+        Déjà client<br>
+
+        <i style="background:#f39c12"></i>
+        Déjà approché<br>
+
+        <i style="background:#9b59b6"></i>
+        Client MPP / Balcan<br>
+
+        <i style="background:#3498db"></i>
+        À venir<br>
+
+      `;
+
+
+      return div;
+
+    };
+
 
   legend.addTo(map);
+
+
+  // ==================================================
+  // DÉMARRAGE
+  // ==================================================
+
+  (async function() {
+
+    try {
+
+      // Important avec MSAL :
+      // traite le retour après loginRedirect.
+      await msalInstance.handleRedirectPromise();
+
+    }
+    catch (error) {
+
+      console.error(
+        "Erreur lors du retour Microsoft :",
+        error
+      );
+
+    }
+
+    await chargerConcessionnaires();
+
+  })();
 
 </script>
 
