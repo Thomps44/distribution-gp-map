@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Distribution GP — Carte des concessionnaires</title>
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    #map {
+      height: 100vh;
+      width: 100%;
+    }
+
+    .legend {
+      background: white;
+      padding: 10px 14px;
+      line-height: 24px;
+      border-radius: 6px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.25);
+    }
+
+    .legend i {
+      width: 14px;
+      height: 14px;
+      display: inline-block;
+      margin-right: 7px;
+      border-radius: 50%;
+    }
+
+    .popup-title {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+
+  // --------------------------------------------------
+  // DONNÉES DE TEST
+  // --------------------------------------------------
+
+  const concessionnaires = [
+
+    {
+      nom: "Garage Montréal",
+      groupe: "Groupe Exemple",
+      adresse: "1234 Rue Sainte-Catherine, Montréal, QC",
+      contact: "Jean Tremblay",
+      notes: "Premier contact à effectuer",
+      statut: "À venir",
+      latitude: 45.5017,
+      longitude: -73.5673
+    },
+
+    {
+      nom: "Auto Québec",
+      groupe: "Groupe Exemple",
+      adresse: "2500 Boulevard Laurier, Québec, QC",
+      contact: "Marie Gagnon",
+      notes: "Déjà rencontré",
+      statut: "Déjà approché",
+      latitude: 46.7784,
+      longitude: -71.2733
+    },
+
+    {
+      nom: "Garage Laval",
+      groupe: "Groupe Exemple",
+      adresse: "1600 Boulevard Saint-Martin, Laval, QC",
+      contact: "Pierre Roy",
+      notes: "Client actif",
+      statut: "Déjà client",
+      latitude: 45.5689,
+      longitude: -73.6920
+    }
+
+  ];
+
+
+  // --------------------------------------------------
+  // CARTE
+  // --------------------------------------------------
+
+  const map = L.map('map').setView([45.55, -73.5], 8);
+
+  L.tileLayer(
+    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    {
+      attribution: '&copy; OpenStreetMap contributors'
+    }
+  ).addTo(map);
+
+
+  // --------------------------------------------------
+  // COULEUR SELON LE STATUT
+  // --------------------------------------------------
+
+  function couleurStatut(statut) {
+
+    if (statut === "Déjà client") {
+      return "#2ecc71";
+    }
+
+    if (statut === "Déjà approché") {
+      return "#f39c12";
+    }
+
+    if (statut === "À venir") {
+      return "#3498db";
+    }
+
+    return "#7f8c8d";
+  }
+
+
+  // --------------------------------------------------
+  // MARQUEURS
+  // --------------------------------------------------
+
+  concessionnaires.forEach(function(c) {
+
+    const couleur = couleurStatut(c.statut);
+
+    const icone = L.divIcon({
+      className: "",
+      html:
+        `<div style="
+          width:18px;
+          height:18px;
+          background:${couleur};
+          border:3px solid white;
+          border-radius:50%;
+          box-shadow:0 1px 5px rgba(0,0,0,0.5);
+        "></div>`,
+      iconSize: [24, 24],
+      iconAnchor: [12, 12]
+    });
+
+
+    const popup = `
+      <div class="popup-title">
+        ${c.nom} (${c.groupe})
+      </div>
+
+      <b>Adresse</b><br>
+      ${c.adresse}<br><br>
+
+      <b>Contact</b><br>
+      ${c.contact}<br><br>
+
+      <b>Notes</b><br>
+      ${c.notes}<br><br>
+
+      <b>Statut</b><br>
+      ${c.statut}
+    `;
+
+
+    L.marker(
+      [c.latitude, c.longitude],
+      { icon: icone }
+    )
+    .addTo(map)
+    .bindPopup(popup);
+
+  });
+
+
+  // --------------------------------------------------
+  // LÉGENDE
+  // --------------------------------------------------
+
+  const legend = L.control({ position: 'bottomright' });
+
+  legend.onAdd = function() {
+
+    const div = L.DomUtil.create('div', 'legend');
+
+    div.innerHTML = `
+      <b>Statut</b><br>
+
+      <i style="background:#2ecc71"></i>
+      Déjà client<br>
+
+      <i style="background:#f39c12"></i>
+      Déjà approché<br>
+
+      <i style="background:#3498db"></i>
+      À venir
+    `;
+
+    return div;
+  };
+
+  legend.addTo(map);
+
+</script>
+
+</body>
+</html>
