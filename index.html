@@ -1158,31 +1158,39 @@
   legend.addTo(map);
 
 
-  // ==================================================
-  // DÉMARRAGE
-  // ==================================================
+ // ==================================================
+// DÉMARRAGE
+// ==================================================
 
-  (async function() {
+(async function() {
 
-    try {
+  try {
 
-      // Important avec MSAL :
-      // traite le retour après loginRedirect.
-      await msalInstance.handleRedirectPromise();
+    // Initialisation obligatoire de MSAL 4.x
+    await msalInstance.initialize();
 
-    }
-    catch (error) {
+    // Traiter le retour après loginRedirect
+    await msalInstance.handleRedirectPromise();
 
-      console.error(
-        "Erreur lors du retour Microsoft :",
-        error
-      );
+  }
+  catch (error) {
 
-    }
+    console.error(
+      "Erreur d'initialisation/authentification Microsoft :",
+      error
+    );
 
-    await chargerConcessionnaires();
+    document.getElementById("status").innerHTML =
+      "<b>Erreur Microsoft :</b> " +
+      error.message;
 
-  })();
+    return;
+
+  }
+
+  await chargerConcessionnaires();
+
+})();
 
 </script>
 
