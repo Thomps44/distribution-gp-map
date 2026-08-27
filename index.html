@@ -1809,9 +1809,6 @@ function retirerDeItineraire(id) {
 
 }
 
-// ==================================================
-// EFFACER LA ROUTE SUR LA CARTE
-// ==================================================
 
 // ==================================================
 // EFFACER LA ROUTE SUR LA CARTE
@@ -1872,106 +1869,6 @@ function effacerRoute() {
 
 }
 
-  // ==================================================
-  // MARQUEUR DÉPART
-  // ==================================================
-
-  if (departCoordonnees) {
-
-    departMarker =
-      L.marker(
-        [
-          departCoordonnees.latitude,
-          departCoordonnees.longitude
-        ],
-        {
-          icon:
-            L.divIcon({
-
-              className: "",
-
-              html: `
-                <div style="
-                  background:#27ae60;
-                  color:white;
-                  width:34px;
-                  height:34px;
-                  border-radius:50%;
-                  border:3px solid white;
-                  box-shadow:0 1px 5px rgba(0,0,0,0.5);
-                  display:flex;
-                  align-items:center;
-                  justify-content:center;
-                  font-weight:bold;
-                  font-size:12px;
-                ">
-                  D
-                </div>
-              `,
-
-              iconSize: [40, 40],
-
-              iconAnchor: [20, 20]
-
-            })
-        }
-      )
-      .addTo(map)
-      .bindPopup("<b>Départ</b>");
-
-  }
-
-
-  // ==================================================
-  // MARQUEUR ARRIVÉE
-  // ==================================================
-
-  if (arriveeCoordonnees) {
-
-    arriveeMarker =
-      L.marker(
-        [
-          arriveeCoordonnees.latitude,
-          arriveeCoordonnees.longitude
-        ],
-        {
-          icon:
-            L.divIcon({
-
-              className: "",
-
-              html: `
-                <div style="
-                  background:#e74c3c;
-                  color:white;
-                  width:34px;
-                  height:34px;
-                  border-radius:50%;
-                  border:3px solid white;
-                  box-shadow:0 1px 5px rgba(0,0,0,0.5);
-                  display:flex;
-                  align-items:center;
-                  justify-content:center;
-                  font-weight:bold;
-                  font-size:12px;
-                ">
-                  A
-                </div>
-              `,
-
-              iconSize: [40, 40],
-
-              iconAnchor: [20, 20]
-
-            })
-        }
-      )
-      .addTo(map)
-      .bindPopup("<b>Arrivée</b>");
-
-  }
-
-}
   
 // ==================================================
 // OBTENIR LA POSITION ACTUELLE
@@ -2494,13 +2391,13 @@ document
 function afficherMarqueursDepartArrivee() {
 
   // Supprimer les anciens marqueurs
-  if (window.departMarker) {
+  if (departMarker) {
 
     map.removeLayer(
       window.departMarker
     );
 
-    window.departMarker = null;
+    departMarker = null;
 
   }
 
