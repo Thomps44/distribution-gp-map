@@ -188,8 +188,57 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 7px 0;
+  padding: 7px 4px;
   border-bottom: 1px solid #eee;
+  cursor: grab;
+  user-select: none;
+  border-radius: 5px;
+}
+
+.route-stop:hover {
+  background: #f5f5f5;
+}
+
+.route-stop.dragging {
+  opacity: 0.45;
+}
+
+.route-stop.drag-over {
+  border-top: 2px solid #2c3e50;
+}
+
+.route-number {
+  width: 23px;
+  height: 23px;
+  min-width: 23px;
+  border-radius: 50%;
+  background: #2c3e50;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.route-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.route-remove {
+  border: none;
+  background: transparent;
+  color: #e74c3c;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  padding: 0;
+  margin-left: 4px;
+  width: 22px;
+  min-width: 22px;
+  flex: 0 0 22px;
 }
 
 .route-number {
@@ -307,6 +356,35 @@
     >
       Effacer l’itinéraire
     </button>
+
+    <div
+  id="routeInfo"
+  style="
+    display:none;
+    margin-top:12px;
+    padding-top:10px;
+    border-top:1px solid #ddd;
+    font-size:13px;
+  "
+>
+  <div>
+    <b>Distance :</b>
+    <span id="routeDistance">—</span>
+  </div>
+
+  <div style="margin-top:5px;">
+    <b>Durée :</b>
+    <span id="routeDuration">—</span>
+  </div>
+</div>
+
+<button
+  class="route-button"
+  id="calculateRoute"
+  style="display:none;"
+>
+  Calculer l’itinéraire
+</button>
 
   </div>  
 
@@ -1311,19 +1389,6 @@ function ajouterAItineraire(concessionnaire) {
 
 }
 
-
-function retirerDeItineraire(id) {
-
-  itineraire =
-    itineraire.filter(
-      c => c.id !== id
-    );
-
-  afficherItineraire();
-
-}
-
-
 function afficherItineraire() {
 
   const liste =
@@ -1332,6 +1397,14 @@ function afficherItineraire() {
   const bouton =
     document.getElementById("clearRoute");
 
+  const boutonCalcul =
+    document.getElementById("calculateRoute");
+
+  const routeInfo =
+    document.getElementById("routeInfo");
+
+
+  // Aucun arrêt
   if (itineraire.length === 0) {
 
     liste.innerHTML = `
@@ -1341,21 +1414,31 @@ function afficherItineraire() {
     `;
 
     bouton.style.display = "none";
+    boutonCalcul.style.display = "none";
+    routeInfo.style.display = "none";
+
+    effacerRoute();
 
     return;
-
   }
 
 
+  // Afficher les boutons
   bouton.style.display = "block";
+  boutonCalcul.style.display = "block";
 
 
+  // Construire la liste
   liste.innerHTML =
     itineraire
       .map(function(c, index) {
 
         return `
-          <div class="route-stop">
+          <div
+            class="route-stop"
+            draggable="true"
+            data-id="${c.id}"
+          >
 
             <div class="route-number">
               ${index + 1}
@@ -1367,7 +1450,7 @@ function afficherItineraire() {
 
             <button
               class="route-remove"
-              onclick="retirerDeItineraire('${c.id}')"
+              data-remove-id="${c.id}"
               title="Retirer"
             >
               ×
@@ -1379,7 +1462,481 @@ function afficherItineraire() {
       })
       .join("");
 
+
+  // ==================================================
+  // SUPPRIMER UN ARRÊT
+  // ==================================================
+
+  liste
+    .querySelectorAll(".route-remove")
+    .forEach(function(boutonRemove) {
+
+      boutonRemove.addEventListener(
+        "click",
+        function(event) {
+
+          event.stopPropagation();
+
+          const id =
+            boutonRemove.getAttribute(
+              "data-remove-id"
+            );
+
+          retirerDeItineraire(id);
+
+        }
+      );
+
+    });
+
+
+  // ==================================================
+  // DRAG & DROP
+  // ==================================================
+
+  let elementDeplace = null;
+
+
+  liste
+    .querySelectorAll(".route-stop")
+    .forEach(function(element) {
+
+
+      element.addEventListener(
+        "dragstart",
+        function(event) {
+
+          elementDeplace = element;
+
+          element.classList.add("dragging");
+
+          event.dataTransfer.effectAllowed =
+            "move";
+
+        }
+      );
+
+
+      element.addEventListener(
+        "dragend",
+        function() {
+
+          element.classList.remove("dragging");
+
+          liste
+            .querySelectorAll(".route-stop")
+            .forEach(function(el) {
+
+              el.classList.remove("drag-over");
+
+            });
+
+          elementDeplace = null;
+
+        }
+      );
+
+
+      element.addEventListener(
+        "dragover",
+        function(event) {
+
+          event.preventDefault();
+
+          if (
+            elementDeplace &&
+            element !== elementDeplace
+          ) {
+
+            element.classList.add("drag-over");
+
+          }
+
+        }
+      );
+
+
+      element.addEventListener(
+        "dragleave",
+        function() {
+
+          element.classList.remove("drag-over");
+
+        }
+      );
+
+
+      element.addEventListener(
+        "drop",
+        function(event) {
+
+          event.preventDefault();
+
+          element.classList.remove("drag-over");
+
+
+          if (
+            !elementDeplace ||
+            element === elementDeplace
+          ) {
+            return;
+          }
+
+
+          const idDeplace =
+            elementDeplace.getAttribute(
+              "data-id"
+            );
+
+          const idCible =
+            element.getAttribute(
+              "data-id"
+            );
+
+
+          const ancienIndex =
+            itineraire.findIndex(
+              c =>
+                String(c.id) ===
+                String(idDeplace)
+            );
+
+
+          const nouvelIndex =
+            itineraire.findIndex(
+              c =>
+                String(c.id) ===
+                String(idCible)
+            );
+
+
+          if (
+            ancienIndex === -1 ||
+            nouvelIndex === -1
+          ) {
+            return;
+          }
+
+
+          const elementRetire =
+            itineraire.splice(
+              ancienIndex,
+              1
+            )[0];
+
+
+          itineraire.splice(
+            nouvelIndex,
+            0,
+            elementRetire
+          );
+
+
+          // Réafficher les numéros
+          afficherItineraire();
+
+          afficherConcessionnaires();
+
+
+          // Si une route existe déjà,
+          // la recalculer avec le nouvel ordre
+          if (itineraire.length >= 2) {
+
+            calculerRoute();
+
+          }
+
+        }
+
+      );
+
+    });
+
 }
+
+// ==================================================
+// RETIRER UN ARRÊT DE L'ITINÉRAIRE
+// ==================================================
+
+function retirerDeItineraire(id) {
+
+  itineraire =
+    itineraire.filter(
+      c =>
+        String(c.id) !==
+        String(id)
+    );
+
+
+  afficherItineraire();
+
+  afficherConcessionnaires();
+
+
+  // Recalculer automatiquement
+  // s'il reste au moins 2 arrêts
+  if (itineraire.length >= 2) {
+
+    calculerRoute();
+
+  }
+  else {
+
+    effacerRoute();
+
+  }
+
+}
+
+
+// ==================================================
+// EFFACER LA ROUTE SUR LA CARTE
+// ==================================================
+
+function effacerRoute() {
+
+  if (routeLayer) {
+
+    map.removeLayer(routeLayer);
+
+    routeLayer = null;
+
+  }
+
+
+  const routeInfo =
+    document.getElementById("routeInfo");
+
+  if (routeInfo) {
+
+    routeInfo.style.display = "none";
+
+  }
+
+
+  document.getElementById(
+    "routeDistance"
+  ).textContent = "—";
+
+
+  document.getElementById(
+    "routeDuration"
+  ).textContent = "—";
+
+}
+
+
+// ==================================================
+// CALCULER LA ROUTE
+// ==================================================
+
+async function calculerRoute() {
+
+  if (itineraire.length < 2) {
+
+    alert(
+      "Vous devez sélectionner au moins 2 concessionnaires."
+    );
+
+    return;
+
+  }
+
+
+  const bouton =
+    document.getElementById("calculateRoute");
+
+
+  bouton.disabled = true;
+
+  bouton.textContent =
+    "Calcul de la route...";
+
+
+  try {
+
+    const coordonnees =
+      itineraire
+        .map(function(c) {
+
+          return (
+            c.longitude +
+            "," +
+            c.latitude
+          );
+
+        })
+        .join(";");
+
+
+    // Toujours en automobile
+    const url =
+      "https://router.project-osrm.org/route/v1/driving/" +
+      coordonnees +
+      "?overview=full&geometries=geojson";
+
+
+    const response =
+      await fetch(url);
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        "Impossible de calculer la route."
+      );
+
+    }
+
+
+    const data =
+      await response.json();
+
+
+    if (
+      data.code !== "Ok" ||
+      !data.routes ||
+      data.routes.length === 0
+    ) {
+
+      throw new Error(
+        "Aucune route disponible."
+      );
+
+    }
+
+
+    const route =
+      data.routes[0];
+
+
+    // Supprimer l'ancienne route
+    effacerRoute();
+
+
+    // ==================================================
+    // DESSINER LA ROUTE
+    // ==================================================
+
+    routeLayer =
+      L.geoJSON(
+        route.geometry,
+        {
+          style: {
+            color: "#2c3e50",
+            weight: 5,
+            opacity: 0.85
+          }
+        }
+      ).addTo(map);
+
+
+    // ==================================================
+    // DISTANCE
+    // ==================================================
+
+    const distanceKm =
+      route.distance / 1000;
+
+
+    document.getElementById(
+      "routeDistance"
+    ).textContent =
+      distanceKm.toFixed(1) + " km";
+
+
+    // ==================================================
+    // DURÉE
+    // ==================================================
+
+    const totalMinutes =
+      Math.round(
+        route.duration / 60
+      );
+
+
+    const heures =
+      Math.floor(
+        totalMinutes / 60
+      );
+
+
+    const minutes =
+      totalMinutes % 60;
+
+
+    let dureeTexte;
+
+
+    if (heures > 0) {
+
+      dureeTexte =
+        heures +
+        " h " +
+        String(minutes).padStart(2, "0");
+
+    }
+    else {
+
+      dureeTexte =
+        minutes +
+        " min";
+
+    }
+
+
+    document.getElementById(
+      "routeDuration"
+    ).textContent =
+      dureeTexte;
+
+
+    document.getElementById(
+      "routeInfo"
+    ).style.display =
+      "block";
+
+
+    // Ajuster la carte à la route
+    map.fitBounds(
+      routeLayer.getBounds(),
+      {
+        padding: [60, 60]
+      }
+    );
+
+
+    document.getElementById(
+      "status"
+    ).textContent =
+      "Itinéraire calculé en automobile.";
+
+
+  }
+  catch (error) {
+
+    console.error(
+      "Erreur calcul itinéraire:",
+      error
+    );
+
+
+    alert(
+      "Impossible de calculer l'itinéraire."
+    );
+
+  }
+  finally {
+
+    bouton.disabled = false;
+
+    bouton.textContent =
+      "Recalculer l’itinéraire";
+
+  }
+
+}
+  
 
 document
   .getElementById("routeMode")
@@ -1397,12 +1954,25 @@ document
 
       itineraire = [];
 
+      effacerRoute();
+
       afficherItineraire();
+
+      afficherConcessionnaires();
 
     }
   );
 
-
+  // ==================================================
+  // BOUTON CALCULER L'ITINÉRAIRE
+  // ==================================================
+  
+  document
+  .getElementById("calculateRoute")
+  .addEventListener(
+    "click",
+    calculerRoute
+  );
   
   // ==================================================
   // ÉVÉNEMENTS
