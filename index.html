@@ -465,10 +465,16 @@ let routeLayer = null;
   // ==================================================
 
   const map =
-    L.map("map").setView(
-      [45.55, -73.5],
-      8
-    );
+  L.map("map", {
+    zoomControl: false
+  }).setView(
+    [45.55, -73.5],
+    8
+  );
+
+L.control.zoom({
+  position: "topright"
+}).addTo(map);
 
 
   L.tileLayer(
@@ -1247,27 +1253,10 @@ marker.on(
       " concessionnaire(s) affiché(s)";
 
 
-    // Ajuster la carte
-    if (visibles.length > 0) {
-
-      const bounds =
-        L.latLngBounds(
-          visibles.map(c => [
-            c.latitude,
-            c.longitude
-          ])
-        );
-
-      map.fitBounds(
-        bounds,
-        {
-          padding: [40, 40]
-        }
-      );
-
-    }
-
-  }
+// Ne pas modifier automatiquement le zoom ou la vue.
+// La carte conserve la position actuelle.
+// Le bouton "Afficher tous les concessionnaires"
+// permet de recentrer manuellement la carte.
 
 
   // ==================================================
