@@ -329,72 +329,16 @@
     Afficher tous les concessionnaires
   </button>
 
- <div class="route-panel">
+  <div class="route-panel">
 
-  <h3>Itinéraire</h3>
+    <h3>Itinéraire</h3>
 
-  <button
-    class="route-button"
-    id="routeMode"
-  >
-    Créer un itinéraire
-  </button>
-
-  <!-- DÉPART -->
-
-  <label
-    for="routeStartType"
-    style="margin-top:10px;"
-  >
-    Départ
-  </label>
-
-  <select id="routeStartType">
-
-    <option value="position">
-      Ma position
-    </option>
-
-    <option value="adresse">
-      Adresse
-    </option>
-
-  </select>
-
-  <input
-    type="text"
-    id="routeStartAddress"
-    placeholder="Adresse de départ..."
-    style="display:none; margin-top:6px;"
-  >
-
-  <!-- ARRIVÉE -->
-
-  <label
-    for="routeEndType"
-    style="margin-top:10px;"
-  >
-    Arrivée
-  </label>
-
-  <select id="routeEndType">
-
-    <option value="position">
-      Ma position
-    </option>
-
-    <option value="adresse">
-      Adresse
-    </option>
-
-  </select>
-
-  <input
-    type="text"
-    id="routeEndAddress"
-    placeholder="Adresse d'arrivée..."
-    style="display:none; margin-top:6px;"
-  >
+    <button
+      class="route-button"
+      id="routeMode"
+    >
+      Créer un itinéraire
+    </button>
 
     <div
       class="route-list"
@@ -525,22 +469,14 @@
     L.layerGroup();
 
   // ==================================================
-// VARIABLES ITINÉRAIRE
-// ==================================================
-
+  // VARIABLES ITINÉRAIRE
+  // ==================================================
+  
 let modeItineraire = false;
-
+  
 let itineraire = [];
-
+  
 let routeLayer = null;
-
-let departCoordonnees = null;
-
-let arriveeCoordonnees = null;
-
-let departMarker = null;
-
-let arriveeMarker = null;
 
   // ==================================================
   // CARTE
@@ -1289,80 +1225,39 @@ const icone =
   .bindPopup(popup);
 
 
-// ==================================================
-// BOUTON "AJOUTER À L'ITINÉRAIRE"
-// ==================================================
-
+// Clic sur le marqueur
 marker.on(
-  "popupopen",
+  "click",
   function() {
 
-    const bouton =
-      document.getElementById(
-        "ajouterRoute-" + c.id
-      );
+    if (modeItineraire) {
 
-    if (!bouton) {
-      return;
-    }
+      setTimeout(function() {
 
-    // Si le concessionnaire est déjà dans l'itinéraire
-    if (
-      itineraire.some(
-        x => String(x.id) === String(c.id)
-      )
-    ) {
+        const bouton =
+          document.getElementById(
+            "ajouterRoute-" + c.id
+          );
 
-      bouton.textContent =
-        "✓ Ajouté à l’itinéraire";
+        if (bouton) {
 
-      bouton.style.background =
-        "#27ae60";
+          bouton.onclick =
+            function() {
 
-      bouton.disabled =
-        true;
+              ajouterAItineraire(c);
 
-      bouton.style.cursor =
-        "default";
+            };
 
-      return;
-    }
+        }
 
-    // Le bouton est actif uniquement
-    // lorsque le mode itinéraire est activé
-    if (!modeItineraire) {
-
-      bouton.disabled = true;
-
-      bouton.style.opacity = "0.5";
-
-      bouton.style.cursor = "not-allowed";
-
-      bouton.title =
-        "Activez le mode itinéraire pour ajouter ce concessionnaire.";
-
-      return;
+      }, 50);
 
     }
-
-    // Mode itinéraire actif
-    bouton.disabled = false;
-
-    bouton.style.opacity = "1";
-
-    bouton.style.cursor = "pointer";
-
-    bouton.onclick =
-      function(event) {
-
-        event.stopPropagation();
-
-        ajouterAItineraire(c);
-
-      };
 
   }
 );
+
+    });
 
 
     document.getElementById("counter").textContent =
@@ -1436,24 +1331,6 @@ function activerModeItineraire() {
     document.getElementById("status").textContent =
       "Cliquez sur les concessionnaires pour les ajouter à l'itinéraire.";
 
-if (map._popup) {
-
-  const bouton =
-    map._popup.getElement()?.querySelector(
-      'button[id^="ajouterRoute-"]'
-    );
-
-  if (bouton) {
-
-    bouton.disabled = false;
-    bouton.style.opacity = "1";
-    bouton.style.cursor = "pointer";
-    bouton.title = "";
-
-  }
-
-}
-    
   }
   else {
 
@@ -1469,64 +1346,7 @@ if (map._popup) {
 
 }
 
-  // ==================================================
-// DÉPART / ARRIVÉE
-// ==================================================
-
-document
-  .getElementById("routeStartType")
-  .addEventListener(
-    "change",
-    function() {
-
-      const champ =
-        document.getElementById(
-          "routeStartAddress"
-        );
-
-      if (this.value === "adresse") {
-
-        champ.style.display = "block";
-
-      }
-      else {
-
-        champ.style.display = "none";
-
-        champ.value = "";
-
-      }
-
-    }
-  );
-
-
-document
-  .getElementById("routeEndType")
-  .addEventListener(
-    "change",
-    function() {
-
-      const champ =
-        document.getElementById(
-          "routeEndAddress"
-        );
-
-      if (this.value === "adresse") {
-
-        champ.style.display = "block";
-
-      }
-      else {
-
-        champ.style.display = "none";
-
-        champ.value = "";
-
-      }
-
-    }
-  );
+  
 
 function ajouterAItineraire(concessionnaire) {
 
@@ -1884,31 +1704,8 @@ function effacerRoute() {
   }
 
 
-  // Supprimer le marqueur de départ
-
-  if (departMarker) {
-
-    map.removeLayer(departMarker);
-
-    departMarker = null;
-
-  }
-
-
-  // Supprimer le marqueur d'arrivée
-
-  if (arriveeMarker) {
-
-    map.removeLayer(arriveeMarker);
-
-    arriveeMarker = null;
-
-  }
-
-
   const routeInfo =
     document.getElementById("routeInfo");
-
 
   if (routeInfo) {
 
@@ -1928,145 +1725,6 @@ function effacerRoute() {
 
 }
 
-  
-// ==================================================
-// OBTENIR LA POSITION ACTUELLE
-// ==================================================
-
-function obtenirPositionActuelle() {
-
-  return new Promise(
-    function(resolve, reject) {
-
-      if (!navigator.geolocation) {
-
-        reject(
-          new Error(
-            "La géolocalisation n'est pas disponible sur cet appareil."
-          )
-        );
-
-        return;
-
-      }
-
-
-      navigator.geolocation.getCurrentPosition(
-
-        function(position) {
-
-          resolve({
-
-            latitude:
-              position.coords.latitude,
-
-            longitude:
-              position.coords.longitude
-
-          });
-
-        },
-
-        function(error) {
-
-          reject(
-            new Error(
-              "Impossible d'obtenir votre position."
-            )
-          );
-
-        },
-
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 60000
-        }
-
-      );
-
-    }
-  );
-
-}
-
-// ==================================================
-// GÉOCODER UNE ADRESSE
-// ==================================================
-
-async function geocoderAdresse(adresse) {
-
-  if (!adresse || !adresse.trim()) {
-
-    throw new Error(
-      "Veuillez entrer une adresse."
-    );
-
-  }
-
-
-  const url =
-    "https://nominatim.openstreetmap.org/search?" +
-    "format=json" +
-    "&limit=1" +
-    "&q=" +
-    encodeURIComponent(adresse);
-
-
-  const response =
-    await fetch(
-      url,
-      {
-        headers: {
-          "Accept":
-            "application/json"
-        }
-      }
-    );
-
-
-  if (!response.ok) {
-
-    throw new Error(
-      "Impossible de rechercher l'adresse."
-    );
-
-  }
-
-
-  const data =
-    await response.json();
-
-
-  if (
-    !data ||
-    data.length === 0
-  ) {
-
-    throw new Error(
-      "Adresse introuvable : " +
-      adresse
-    );
-
-  }
-
-
-  return {
-
-    latitude:
-      parseFloat(
-        data[0].lat
-      ),
-
-    longitude:
-      parseFloat(
-        data[0].lon
-      )
-
-  };
-
-}
-
 
 // ==================================================
 // CALCULER LA ROUTE
@@ -2074,10 +1732,10 @@ async function geocoderAdresse(adresse) {
 
 async function calculerRoute() {
 
-  if (itineraire.length < 1) {
+  if (itineraire.length < 2) {
 
     alert(
-      "Vous devez sélectionner au moins 1 concessionnaire."
+      "Vous devez sélectionner au moins 2 concessionnaires."
     );
 
     return;
@@ -2097,122 +1755,21 @@ async function calculerRoute() {
 
   try {
 
-    // ==================================================
-    // DÉTERMINER LE DÉPART
-    // ==================================================
-
-    if (
-      document.getElementById("routeStartType").value ===
-      "position"
-    ) {
-
-      departCoordonnees =
-        await obtenirPositionActuelle();
-
-    }
-    else {
-
-      departCoordonnees =
-        await geocoderAdresse(
-          document.getElementById(
-            "routeStartAddress"
-          ).value
-        );
-
-    }
-
-
-    // ==================================================
-    // DÉTERMINER L'ARRIVÉE
-    // ==================================================
-
-    if (
-      document.getElementById("routeEndType").value ===
-      "position"
-    ) {
-
-      arriveeCoordonnees =
-        await obtenirPositionActuelle();
-
-    }
-    else {
-
-      arriveeCoordonnees =
-        await geocoderAdresse(
-          document.getElementById(
-            "routeEndAddress"
-          ).value
-        );
-
-    }
-
-
-    // Afficher les marqueurs
-
-    afficherMarqueursDepartArrivee();
-
-
-    // ==================================================
-    // CONSTRUIRE LA LISTE DES COORDONNÉES
-    // ==================================================
-
-    const points =
-      [];
-
-
-    // Départ
-
-    points.push(
-      departCoordonnees
-    );
-
-
-    // Concessionnaires
-
-    itineraire.forEach(
-      function(c) {
-
-        points.push({
-
-          latitude:
-            c.latitude,
-
-          longitude:
-            c.longitude
-
-        });
-
-      }
-    );
-
-
-    // Arrivée
-
-    points.push(
-      arriveeCoordonnees
-    );
-
-
     const coordonnees =
-      points
-        .map(
-          function(p) {
+      itineraire
+        .map(function(c) {
 
-            return (
-              p.longitude +
-              "," +
-              p.latitude
-            );
+          return (
+            c.longitude +
+            "," +
+            c.latitude
+          );
 
-          }
-        )
+        })
         .join(";");
 
 
-    // ==================================================
-    // APPEL OSRM
-    // ==================================================
-
+    // Toujours en automobile
     const url =
       "https://router.project-osrm.org/route/v1/driving/" +
       coordonnees +
@@ -2253,17 +1810,8 @@ async function calculerRoute() {
       data.routes[0];
 
 
-    // ==================================================
-    // SUPPRIMER L'ANCIENNE ROUTE
-    // ==================================================
-
-    if (routeLayer) {
-
-      map.removeLayer(routeLayer);
-
-      routeLayer = null;
-
-    }
+    // Supprimer l'ancienne route
+    effacerRoute();
 
 
     // ==================================================
@@ -2275,13 +1823,9 @@ async function calculerRoute() {
         route.geometry,
         {
           style: {
-
             color: "#2c3e50",
-
             weight: 5,
-
             opacity: 0.85
-
           }
         }
       ).addTo(map);
@@ -2298,8 +1842,7 @@ async function calculerRoute() {
     document.getElementById(
       "routeDistance"
     ).textContent =
-      distanceKm.toFixed(1) +
-      " km";
+      distanceKm.toFixed(1) + " km";
 
 
     // ==================================================
@@ -2330,10 +1873,7 @@ async function calculerRoute() {
       dureeTexte =
         heures +
         " h " +
-        String(minutes).padStart(
-          2,
-          "0"
-        );
+        String(minutes).padStart(2, "0");
 
     }
     else {
@@ -2357,10 +1897,7 @@ async function calculerRoute() {
       "block";
 
 
-    // ==================================================
-    // AJUSTER LA CARTE
-    // ==================================================
-
+    // Ajuster la carte à la route
     map.fitBounds(
       routeLayer.getBounds(),
       {
@@ -2385,7 +1922,6 @@ async function calculerRoute() {
 
 
     alert(
-      error.message ||
       "Impossible de calculer l'itinéraire."
     );
 
@@ -2400,8 +1936,7 @@ async function calculerRoute() {
   }
 
 }
-
-
+  
 
 document
   .getElementById("routeMode")
@@ -2418,10 +1953,6 @@ document
     function() {
 
       itineraire = [];
-
-      departCoordonnees = null;
-
-      arriveeCoordonnees = null;
 
       effacerRoute();
 
@@ -2442,142 +1973,10 @@ document
     "click",
     calculerRoute
   );
-
-// ==================================================
-// MARQUEURS DÉPART / ARRIVÉE
-// ==================================================
-
-function afficherMarqueursDepartArrivee() {
-
-  // Supprimer les anciens marqueurs
-  if (departMarker) {
-
-    map.removeLayer(
-      window.departMarker
-    );
-
-    departMarker = null;
-
-  }
-
-
-  if (window.arriveeMarker) {
-
-    map.removeLayer(
-      window.arriveeMarker
-    );
-
-    window.arriveeMarker = null;
-
-  }
-
-
+  
   // ==================================================
-  // MARQUEUR DÉPART
+  // ÉVÉNEMENTS
   // ==================================================
-
-  if (departCoordonnees) {
-
-    window.departMarker =
-      L.marker(
-        [
-          departCoordonnees.latitude,
-          departCoordonnees.longitude
-        ],
-        {
-          icon:
-            L.divIcon({
-
-              className: "",
-
-              html: `
-                <div style="
-                  width:34px;
-                  height:34px;
-                  background:#27ae60;
-                  border:3px solid white;
-                  border-radius:50%;
-                  box-shadow:0 1px 6px rgba(0,0,0,0.5);
-                  display:flex;
-                  align-items:center;
-                  justify-content:center;
-                  color:white;
-                  font-weight:bold;
-                  font-size:12px;
-                ">
-                  D
-                </div>
-              `,
-
-              iconSize:
-                [40, 40],
-
-              iconAnchor:
-                [20, 20]
-
-            })
-        }
-      )
-      .addTo(map);
-
-  }
-
-
-  // ==================================================
-  // MARQUEUR ARRIVÉE
-  // ==================================================
-
-  if (arriveeCoordonnees) {
-
-    window.arriveeMarker =
-      L.marker(
-        [
-          arriveeCoordonnees.latitude,
-          arriveeCoordonnees.longitude
-        ],
-        {
-          icon:
-            L.divIcon({
-
-              className: "",
-
-              html: `
-                <div style="
-                  width:34px;
-                  height:34px;
-                  background:#e74c3c;
-                  border:3px solid white;
-                  border-radius:50%;
-                  box-shadow:0 1px 6px rgba(0,0,0,0.5);
-                  display:flex;
-                  align-items:center;
-                  justify-content:center;
-                  color:white;
-                  font-weight:bold;
-                  font-size:12px;
-                ">
-                  A
-                </div>
-              `,
-
-              iconSize:
-                [40, 40],
-
-              iconAnchor:
-                [20, 20]
-
-            })
-        }
-      )
-      .addTo(map);
-
-  }
-
-}
-
-// ==================================================
-// ÉVÉNEMENTS
-// ==================================================
 
   document
     .getElementById("search")
