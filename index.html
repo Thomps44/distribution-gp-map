@@ -1289,39 +1289,80 @@ const icone =
   .bindPopup(popup);
 
 
-// Clic sur le marqueur
+// ==================================================
+// BOUTON "AJOUTER À L'ITINÉRAIRE"
+// ==================================================
+
 marker.on(
-  "click",
+  "popupopen",
   function() {
 
-    if (modeItineraire) {
+    const bouton =
+      document.getElementById(
+        "ajouterRoute-" + c.id
+      );
 
-      setTimeout(function() {
+    if (!bouton) {
+      return;
+    }
 
-        const bouton =
-          document.getElementById(
-            "ajouterRoute-" + c.id
-          );
+    // Si le concessionnaire est déjà dans l'itinéraire
+    if (
+      itineraire.some(
+        x => String(x.id) === String(c.id)
+      )
+    ) {
 
-        if (bouton) {
+      bouton.textContent =
+        "✓ Ajouté à l’itinéraire";
 
-          bouton.onclick =
-            function() {
+      bouton.style.background =
+        "#27ae60";
 
-              ajouterAItineraire(c);
+      bouton.disabled =
+        true;
 
-            };
+      bouton.style.cursor =
+        "default";
 
-        }
+      return;
+    }
 
-      }, 50);
+    // Le bouton est actif uniquement
+    // lorsque le mode itinéraire est activé
+    if (!modeItineraire) {
+
+      bouton.disabled = true;
+
+      bouton.style.opacity = "0.5";
+
+      bouton.style.cursor = "not-allowed";
+
+      bouton.title =
+        "Activez le mode itinéraire pour ajouter ce concessionnaire.";
+
+      return;
 
     }
 
+    // Mode itinéraire actif
+    bouton.disabled = false;
+
+    bouton.style.opacity = "1";
+
+    bouton.style.cursor = "pointer";
+
+    bouton.onclick =
+      function(event) {
+
+        event.stopPropagation();
+
+        ajouterAItineraire(c);
+
+      };
+
   }
 );
-
-    });
 
 
     document.getElementById("counter").textContent =
@@ -1395,6 +1436,24 @@ function activerModeItineraire() {
     document.getElementById("status").textContent =
       "Cliquez sur les concessionnaires pour les ajouter à l'itinéraire.";
 
+if (map._popup) {
+
+  const bouton =
+    map._popup.getElement()?.querySelector(
+      'button[id^="ajouterRoute-"]'
+    );
+
+  if (bouton) {
+
+    bouton.disabled = false;
+    bouton.style.opacity = "1";
+    bouton.style.cursor = "pointer";
+    bouton.title = "";
+
+  }
+
+}
+    
   }
   else {
 
