@@ -391,6 +391,14 @@
   Calculer l’itinéraire
 </button>
 
+<button
+  class="btn-primary"
+  id="openGoogleMaps"
+  style="display:none;"
+>
+  🗺️ Ouvrir dans Google Maps
+</button>
+    
   </div>  
 
   <div class="counter" id="counter">
@@ -1396,17 +1404,20 @@ function ajouterAItineraire(concessionnaire) {
 
 function afficherItineraire() {
 
-  const liste =
-    document.getElementById("routeList");
+const liste =
+  document.getElementById("routeList");
 
-  const bouton =
-    document.getElementById("clearRoute");
+const bouton =
+  document.getElementById("clearRoute");
 
-  const boutonCalcul =
-    document.getElementById("calculateRoute");
+const boutonCalcul =
+  document.getElementById("calculateRoute");
 
-  const routeInfo =
-    document.getElementById("routeInfo");
+const boutonGoogleMaps =
+  document.getElementById("openGoogleMaps");
+
+const routeInfo =
+  document.getElementById("routeInfo");
 
 
   // Aucun arrêt
@@ -1420,6 +1431,7 @@ function afficherItineraire() {
 
     bouton.style.display = "none";
     boutonCalcul.style.display = "none";
+    boutonGoogleMaps.style.display = "none";
     routeInfo.style.display = "none";
 
     effacerRoute();
@@ -1431,6 +1443,7 @@ function afficherItineraire() {
   // Afficher les boutons
   bouton.style.display = "block";
   boutonCalcul.style.display = "block";
+  boutonGoogleMaps.style.display = "block";
 
 
   // Construire la liste
@@ -1944,6 +1957,46 @@ async function calculerRoute() {
   }
 
 }
+
+// ==================================================
+// OUVRIR LES ARRÊTS DANS GOOGLE MAPS
+// ==================================================
+
+function ouvrirGoogleMaps() {
+
+  if (itineraire.length === 0) {
+
+    alert(
+      "Vous devez sélectionner au moins un concessionnaire."
+    );
+
+    return;
+
+  }
+
+  const destinations =
+    itineraire
+      .map(function(c) {
+
+        return (
+          c.latitude +
+          "," +
+          c.longitude
+        );
+
+      })
+      .join("/");
+
+  const url =
+    "https://www.google.com/maps/dir/" +
+    destinations;
+
+  window.open(
+    url,
+    "_blank"
+  );
+
+}
   
 
 document
@@ -1980,6 +2033,13 @@ document
   .addEventListener(
     "click",
     calculerRoute
+  );
+
+document
+  .getElementById("openGoogleMaps")
+  .addEventListener(
+    "click",
+    ouvrirGoogleMaps
   );
   
   // ==================================================
