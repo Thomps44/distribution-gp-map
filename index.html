@@ -1223,7 +1223,7 @@ marker.on(
         return;
       }
 
-      // Si le concessionnaire est déjà dans l'itinéraire
+      // Si déjà dans l'itinéraire
       if (
         itineraire.some(
           x => x.id === c.id
@@ -1242,22 +1242,26 @@ marker.on(
         return;
       }
 
-      // Toujours afficher le bouton,
-      // mais seulement permettre l'ajout
-      // si le mode itinéraire est actif.
+      // Le bouton fonctionne toujours
       bouton.onclick =
         function() {
 
+          // Activer automatiquement le mode itinéraire
           if (!modeItineraire) {
 
-            alert(
-              "Activez d'abord le mode « Créer un itinéraire »."
-            );
+            modeItineraire = true;
 
-            return;
+            const boutonMode =
+              document.getElementById("routeMode");
+
+            boutonMode.textContent =
+              "✓ Mode itinéraire actif";
+
+            boutonMode.classList.add("active");
 
           }
 
+          // Ajouter le concessionnaire
           ajouterAItineraire(c);
 
         };
@@ -1266,7 +1270,6 @@ marker.on(
 
   }
 );
-
     });
 
 
