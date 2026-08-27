@@ -36,20 +36,25 @@
     -------------------------------------------------- */
 
     .controls {
-      position: absolute;
-      top: 15px;
-      left: 15px;
-      z-index: 1000;
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  z-index: 1000;
 
-      width: 320px;
-      max-width: calc(100vw - 30px);
+  width: 320px;
+  max-width: calc(100vw - 30px);
 
-      background: white;
-      padding: 16px;
+  max-height: calc(100vh - 30px);
+  overflow-y: auto;
 
-      border-radius: 10px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.25);
-    }
+  background: white;
+  padding: 16px;
+
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+
+  box-sizing: border-box;
+}
 
     .controls h2 {
       margin: 0 0 12px 0;
