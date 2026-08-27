@@ -246,37 +246,6 @@
   flex: 0 0 22px;
 }
 
-.route-number {
-  width: 23px;
-  height: 23px;
-  min-width: 23px;
-  border-radius: 50%;
-  background: #2c3e50;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-}
-
-.route-name {
-  flex: 1;
-}
-
-.route-remove {
-  border: none;
-  background: transparent;
-  color: #e74c3c;
-  cursor: pointer;
-  font-size: 18px;
-  font-weight: bold;
-  padding: 0;
-  margin-left: 4px;
-  width: 22px;
-  min-width: 22px;
-  flex: 0 0 22px;
-}
-
 .route-empty {
   color: #777;
   font-style: italic;
@@ -392,8 +361,8 @@
 </button>
 
 <button
-  class="btn-primary"
-  id="openGoogleMaps"
+  class="btn-secondary"
+  id="googleMapsRoute"
   style="display:none;"
 >
   🗺️ Ouvrir dans Google Maps
@@ -1413,11 +1382,11 @@ const bouton =
 const boutonCalcul =
   document.getElementById("calculateRoute");
 
-const boutonGoogleMaps =
-  document.getElementById("openGoogleMaps");
-
 const routeInfo =
   document.getElementById("routeInfo");
+
+const boutonGoogle =
+  document.getElementById("googleMapsRoute");
 
 
   // Aucun arrêt
@@ -1431,7 +1400,6 @@ const routeInfo =
 
     bouton.style.display = "none";
     boutonCalcul.style.display = "none";
-    boutonGoogleMaps.style.display = "none";
     routeInfo.style.display = "none";
 
     effacerRoute();
@@ -1443,7 +1411,10 @@ const routeInfo =
   // Afficher les boutons
   bouton.style.display = "block";
   boutonCalcul.style.display = "block";
-  boutonGoogleMaps.style.display = "block";
+  boutonGoogle.style.display =
+  itineraire.length >= 2
+    ? "block"
+    : "none";
 
 
   // Construire la liste
@@ -2035,12 +2006,62 @@ document
     calculerRoute
   );
 
+  // ==================================================
+// OUVRIR L'ITINÉRAIRE DANS GOOGLE MAPS
+// ==================================================
+
 document
-  .getElementById("openGoogleMaps")
+  .getElementById("googleMapsRoute")
   .addEventListener(
     "click",
-    ouvrirGoogleMaps
+    function() {
+
+      if (itineraire.length === 0) {
+        return;
+      }
+
+      const points =
+        itineraire.map(function(c) {
+
+          return encodeURIComponent(
+            c.nom +
+            " - " +
+            c.groupe +
+            ", " +
+            c.adresse
+          );
+
+        });
+
+      const destination =
+        points[points.length - 1];
+
+      const waypoints =
+        points
+          .slice(0, -1)
+          .join("|");
+
+      let url =
+        "https://www.google.com/maps/dir/?api=1" +
+        "&destination=" +
+        destination;
+
+      if (waypoints) {
+
+        url +=
+          "&waypoints=" +
+          waypoints;
+
+      }
+
+      window.open(
+        url,
+        "_blank"
+      );
+
+    }
   );
+
   
   // ==================================================
   // ÉVÉNEMENTS
