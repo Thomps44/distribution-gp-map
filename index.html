@@ -1212,29 +1212,57 @@ marker.on(
   "click",
   function() {
 
-    if (modeItineraire) {
+    setTimeout(function() {
 
-      setTimeout(function() {
+      const bouton =
+        document.getElementById(
+          "ajouterRoute-" + c.id
+        );
 
-        const bouton =
-          document.getElementById(
-            "ajouterRoute-" + c.id
-          );
+      if (!bouton) {
+        return;
+      }
 
-        if (bouton) {
+      // Si le concessionnaire est déjà dans l'itinéraire
+      if (
+        itineraire.some(
+          x => x.id === c.id
+        )
+      ) {
 
-          bouton.onclick =
-            function() {
+        bouton.textContent =
+          "✓ Déjà dans l’itinéraire";
 
-              ajouterAItineraire(c);
+        bouton.style.background =
+          "#27ae60";
 
-            };
+        bouton.disabled =
+          true;
 
-        }
+        return;
+      }
 
-      }, 50);
+      // Toujours afficher le bouton,
+      // mais seulement permettre l'ajout
+      // si le mode itinéraire est actif.
+      bouton.onclick =
+        function() {
 
-    }
+          if (!modeItineraire) {
+
+            alert(
+              "Activez d'abord le mode « Créer un itinéraire »."
+            );
+
+            return;
+
+          }
+
+          ajouterAItineraire(c);
+
+        };
+
+    }, 50);
 
   }
 );
