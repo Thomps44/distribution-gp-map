@@ -154,6 +154,76 @@
       font-size: 13px;
       font-weight: bold;
     }
+    
+/* --------------------------------------------------
+   MODE ITINÉRAIRE
+-------------------------------------------------- */
+
+.route-panel {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #ddd;
+}
+
+.route-panel h3 {
+  margin: 0 0 8px 0;
+  font-size: 15px;
+}
+
+.route-button {
+  background: #2c3e50;
+  color: white;
+}
+
+.route-button.active {
+  background: #27ae60;
+}
+
+.route-list {
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+.route-stop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.route-number {
+  width: 23px;
+  height: 23px;
+  min-width: 23px;
+  border-radius: 50%;
+  background: #2c3e50;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.route-name {
+  flex: 1;
+}
+
+.route-remove {
+  border: none;
+  background: transparent;
+  color: #e74c3c;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 2px 5px;
+}
+
+.route-empty {
+  color: #777;
+  font-style: italic;
+  margin-top: 8px;
+}
+    
   </style>
 </head>
 
@@ -204,6 +274,36 @@
   >
     Afficher tous les concessionnaires
   </button>
+
+  <div class="route-panel">
+
+    <h3>🚗 Itinéraire</h3>
+
+    <button
+      class="route-button"
+      id="routeMode"
+    >
+      Créer un itinéraire
+    </button>
+
+    <div
+      class="route-list"
+      id="routeList"
+    >
+      <div class="route-empty">
+        Aucun arrêt sélectionné.
+      </div>
+    </div>
+
+    <button
+      class="btn-secondary"
+      id="clearRoute"
+      style="display:none;"
+    >
+      Effacer l’itinéraire
+    </button>
+
+  </div>  
 
   <div class="counter" id="counter">
     Chargement...
@@ -285,6 +385,15 @@
   let markersLayer =
     L.layerGroup();
 
+  // ==================================================
+  // VARIABLES ITINÉRAIRE
+  // ==================================================
+  
+let modeItineraire = false;
+  
+let itineraire = [];
+  
+let routeLayer = null;
 
   // ==================================================
   // CARTE
@@ -958,20 +1067,70 @@
           </b>
         </div>
 
+        <button
+          id="ajouterRoute-${c.id}"
+          style="
+            margin-top:10px;
+            width:100%;
+            padding:8px;
+            border:none;
+            border-radius:6px;
+            background:#2c3e50;
+            color:white;
+            cursor:pointer;
+          "
+        >
+          🚗 Ajouter à l'itinéraire
+        </button>
+
       `;
 
 
-      L.marker(
-        [
-          c.latitude,
-          c.longitude
-        ],
-        {
-          icon: icone
+      const marker =
+  L.marker(
+    [
+      c.latitude,
+      c.longitude
+    ],
+    {
+      icon: icone
+    }
+  )
+  .addTo(markersLayer)
+  .bindPopup(popup);
+
+
+// Clic sur le marqueur
+marker.on(
+  "click",
+  function() {
+
+    if (modeItineraire) {
+
+      setTimeout(function() {
+
+        const bouton =
+          document.getElementById(
+            "ajouterRoute-" + c.id
+          );
+
+        if (bouton) {
+
+          bouton.onclick =
+            function() {
+
+              ajouterAItineraire(c);
+
+            };
+
         }
-      )
-      .addTo(markersLayer)
-      .bindPopup(popup);
+
+      }, 50);
+
+    }
+
+  }
+);
 
     });
 
@@ -1026,7 +1185,154 @@
 
   }
 
+// ==================================================
+// MODE ITINÉRAIRE
+// ==================================================
 
+function activerModeItineraire() {
+
+  modeItineraire = !modeItineraire;
+
+  const bouton =
+    document.getElementById("routeMode");
+
+  if (modeItineraire) {
+
+    bouton.textContent =
+      "✓ Mode itinéraire actif";
+
+    bouton.classList.add("active");
+
+    document.getElementById("status").textContent =
+      "Cliquez sur les concessionnaires pour les ajouter à l'itinéraire.";
+
+  }
+  else {
+
+    bouton.textContent =
+      "Créer un itinéraire";
+
+    bouton.classList.remove("active");
+
+    document.getElementById("status").textContent =
+      "Données SharePoint chargées.";
+
+  }
+
+}
+
+  
+
+function ajouterAItineraire(concessionnaire) {
+
+  // Éviter les doublons
+  if (
+    itineraire.some(
+      c => c.id === concessionnaire.id
+    )
+  ) {
+    return;
+  }
+
+  itineraire.push(concessionnaire);
+
+  afficherItineraire();
+
+}
+
+
+function retirerDeItineraire(id) {
+
+  itineraire =
+    itineraire.filter(
+      c => c.id !== id
+    );
+
+  afficherItineraire();
+
+}
+
+
+function afficherItineraire() {
+
+  const liste =
+    document.getElementById("routeList");
+
+  const bouton =
+    document.getElementById("clearRoute");
+
+  if (itineraire.length === 0) {
+
+    liste.innerHTML = `
+      <div class="route-empty">
+        Aucun arrêt sélectionné.
+      </div>
+    `;
+
+    bouton.style.display = "none";
+
+    return;
+
+  }
+
+
+  bouton.style.display = "block";
+
+
+  liste.innerHTML =
+    itineraire
+      .map(function(c, index) {
+
+        return `
+          <div class="route-stop">
+
+            <div class="route-number">
+              ${index + 1}
+            </div>
+
+            <div class="route-name">
+              ${escapeHtml(c.nom)}
+            </div>
+
+            <button
+              class="route-remove"
+              onclick="retirerDeItineraire('${c.id}')"
+              title="Retirer"
+            >
+              ×
+            </button>
+
+          </div>
+        `;
+
+      })
+      .join("");
+
+}
+
+document
+  .getElementById("routeMode")
+  .addEventListener(
+    "click",
+    activerModeItineraire
+  );
+
+
+document
+  .getElementById("clearRoute")
+  .addEventListener(
+    "click",
+    function() {
+
+      itineraire = [];
+
+      afficherItineraire();
+
+    }
+  );
+
+
+  
   // ==================================================
   // ÉVÉNEMENTS
   // ==================================================
