@@ -1450,8 +1450,11 @@ function afficherItineraire() {
             </div>
 
             <div class="route-name">
-              ${escapeHtml(c.nom)}
-            </div>
+  <strong>${escapeHtml(c.nom)}</strong>
+  <div style="font-size:11px; color:#777; margin-top:2px;">
+    ${escapeHtml(c.groupe)}
+  </div>
+</div>
 
             <button
               class="route-remove"
