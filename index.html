@@ -587,7 +587,9 @@ let routeLayer = null;
 
     const fields =
       item.fields || {};
-      console.log("CHAMPS SHAREPOINT :", fields);
+      if (fields["Dernière commande"] !== undefined) {
+  console.log("DERNIÈRE COMMANDE :", fields["Dernière commande"]);
+}
     
     return {
 
