@@ -583,102 +583,99 @@ let routeLayer = null;
   // TRANSFORMER UN ÉLÉMENT SHAREPOINT
   // ==================================================
 
-  function convertirConcessionnaire(item) {
+ function convertirConcessionnaire(item) {
 
-    const fields =
-      item.fields || {};
-      console.log("TOUS LES CHAMPS :", Object.keys(fields));
-}
-    
-    return {
+  const fields =
+    item.fields || {};
 
-      id:
-        item.id,
+  console.log("TOUS LES CHAMPS :", Object.keys(fields));
 
-      nom:
+  return {
+
+    id:
+      item.id,
+
+    nom:
+      getField(
+        fields,
+        [
+          "Concessionnaire",
+          "Title",
+          "Nom"
+        ]
+      ),
+
+    groupe:
+      getField(
+        fields,
+        [
+          "Groupe"
+        ]
+      ),
+
+    adresse:
+      getField(
+        fields,
+        [
+          "Adresse"
+        ]
+      ),
+
+    contact:
+      getField(
+        fields,
+        [
+          "Contact"
+        ]
+      ),
+
+    notes:
+      getField(
+        fields,
+        [
+          "Notes"
+        ]
+      ),
+
+    statut:
+      getField(
+        fields,
+        [
+          "Statut"
+        ]
+      ),
+
+    derniereCommande:
+      getField(
+        fields,
+        [
+          "Dernière commande"
+        ]
+      ),
+
+    longitude:
+      parseFloat(
         getField(
           fields,
           [
-            "Concessionnaire",
-            "Title",
-            "Nom"
+            "Longitude"
           ]
-        ),
-
-      groupe:
-        getField(
-          fields,
-          [
-            "Groupe"
-          ]
-        ),
-
-      adresse:
-        getField(
-          fields,
-          [
-            "Adresse"
-          ]
-        ),
-
-      contact:
-        getField(
-          fields,
-          [
-            "Contact"
-          ]
-        ),
-
-      notes:
-        getField(
-          fields,
-          [
-            "Notes"
-          ]
-        ),
-
-      statut:
-        getField(
-          fields,
-          [
-            "Statut"
-          ]
-        ),
-      
-      derniereCommande:
-        getField(
-          fields,
-          [
-            "Dernière commande",
-          
-          ]
-        ),
-      
-      
-      longitude:
-        parseFloat(
-          getField(
-            fields,
-            [
-              "Longitude"
-            ]
-          )
-        ),
-
-      latitude:
-        parseFloat(
-          getField(
-            fields,
-            [
-              "Latitude"
-            ]
-          )
         )
+      ),
 
-    };
+    latitude:
+      parseFloat(
+        getField(
+          fields,
+          [
+            "Latitude"
+          ]
+        )
+      )
 
-  }
+  };
 
+}
 
   // ==================================================
   // AUTHENTIFICATION
