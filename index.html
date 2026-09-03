@@ -587,8 +587,7 @@ let routeLayer = null;
 
     const fields =
       item.fields || {};
-      if (fields["Dernière commande"] !== undefined) {
-  console.log("DERNIÈRE COMMANDE :", fields["Dernière commande"]);
+      console.log("TOUS LES CHAMPS :", Object.keys(fields));
 }
     
     return {
