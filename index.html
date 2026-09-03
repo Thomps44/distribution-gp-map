@@ -642,7 +642,16 @@ let routeLayer = null;
             "Statut"
           ]
         ),
-
+      derniereCommande:
+        getField(
+          fields,
+          [
+            "Dernière commande",
+          
+          ]
+        ),
+      
+      
       longitude:
         parseFloat(
           getField(
@@ -1171,6 +1180,15 @@ const icone =
           </span><br>
           <b style="color:${couleur}">
             ${escapeHtml(c.statut)}
+          </b>
+        </div>
+
+        <div class="popup-section">
+          <span class="popup-label">
+            Statut
+          </span><br>
+          <b style="color:${couleur}">
+            ${escapeHtml(c.derniereCommande)}
           </b>
         </div>
 
