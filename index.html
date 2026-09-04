@@ -251,6 +251,64 @@
   font-style: italic;
   margin-top: 8px;
 }
+
+
+/* ==================================================
+   MENU MOBILE
+================================================== */
+
+.toggle-menu {
+  display: none;
+}
+
+/* VERSION MOBILE */
+@media (max-width: 768px) {
+
+  .toggle-menu {
+    display: block;
+
+    position: absolute;
+    top: 10px;
+    left: 10px;
+
+    z-index: 1001;
+
+    padding: 10px 14px;
+
+    border: none;
+    border-radius: 8px;
+
+    background: white;
+    color: #2c3e50;
+
+    font-size: 15px;
+    font-weight: bold;
+
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+
+    cursor: pointer;
+  }
+
+  .controls {
+    display: none;
+
+    top: 55px;
+    left: 10px;
+    right: 10px;
+
+    width: auto;
+    max-width: none;
+
+    max-height: calc(100vh - 65px);
+
+    overflow-y: auto;
+  }
+
+  .controls.menu-ouvert {
+    display: block;
+  }
+
+}
     
   </style>
 </head>
@@ -259,7 +317,11 @@
 
 <div id="map"></div>
 
-<div class="controls">
+<button id="toggleMenu" class="toggle-menu">
+  ☰ Options
+</button>
+
+<div class="controls" id="menuOptions">
 
   <h2>Distribution GP</h2>
 
@@ -2274,6 +2336,45 @@ document
 
 })();
 
+
+// ==================================================
+// MENU MOBILE
+// ==================================================
+
+const toggleMenu =
+  document.getElementById("toggleMenu");
+
+const menuOptions =
+  document.getElementById("menuOptions");
+
+toggleMenu.addEventListener(
+  "click",
+  function() {
+
+    menuOptions.classList.toggle(
+      "menu-ouvert"
+    );
+
+    if (
+      menuOptions.classList.contains(
+        "menu-ouvert"
+      )
+    ) {
+
+      toggleMenu.textContent =
+        "✕ Fermer";
+
+    }
+    else {
+
+      toggleMenu.textContent =
+        "☰ Options";
+
+    }
+
+  }
+);
+  
 </script>
 
 </body>
