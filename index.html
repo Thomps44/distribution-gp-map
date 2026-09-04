@@ -536,10 +536,16 @@ let routeLayer = null;
   // ==================================================
 
  const map =
-  L.map("map").setView(
+  L.map("map", {
+    zoomControl: false
+  }).setView(
     [45.55, -73.5],
     8
   );
+
+L.control.zoom({
+  position: "topright"
+}).addTo(map);
 
 
   L.tileLayer(
