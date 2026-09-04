@@ -117,12 +117,21 @@
     -------------------------------------------------- */
 
     .legend {
-      background: white;
-      padding: 10px 14px;
-      line-height: 24px;
-      border-radius: 6px;
-      box-shadow: 0 1px 5px rgba(0,0,0,0.25);
-    }
+  background: white;
+  padding: 10px 14px;
+  line-height: 24px;
+  border-radius: 6px;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.25);
+}
+
+.legend i {
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+  margin-right: 7px;
+  border-radius: 50%;
+  vertical-align: middle;
+}
 
     .legend i {
       width: 14px;
@@ -2266,37 +2275,89 @@ document
 
 
   legend.onAdd =
-    function() {
+  function() {
 
-      const div =
-        L.DomUtil.create(
-          "div",
-          "legend"
-        );
+    const div =
+      L.DomUtil.create(
+        "div",
+        "legend"
+      );
 
+    div.innerHTML = `
 
-      div.innerHTML = `
+      <div
+        id="legendHeader"
+        style="
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          cursor:pointer;
+          font-weight:bold;
+        "
+      >
+        <span>Statut</span>
+        <span id="legendToggle">−</span>
+      </div>
 
-        <b>Statut</b><br>
+      <div id="legendContent">
 
-        <i style="background:#2ecc71"></i>
-        Déjà client<br>
+        <div>
+          <i style="background:#2ecc71"></i>
+          Déjà client
+        </div>
 
-        <i style="background:#f39c12"></i>
-        Déjà approché<br>
+        <div>
+          <i style="background:#f39c12"></i>
+          Déjà approché
+        </div>
 
-        <i style="background:#3498db"></i>
-        Client MPP / Balcan<br>
+        <div>
+          <i style="background:#e74c3c"></i>
+          À venir
+        </div>
 
-        <i style="background:#e74c3c"></i>
-        À venir<br>
+      </div>
 
-      `;
+    `;
 
+    // Empêcher le clic de manipuler la carte
+    L.DomEvent.disableClickPropagation(div);
 
-      return div;
+    // Bouton réduire / agrandir
+    const header =
+      div.querySelector("#legendHeader");
 
-    };
+    const content =
+      div.querySelector("#legendContent");
+
+    const toggle =
+      div.querySelector("#legendToggle");
+
+    header.addEventListener(
+      "click",
+      function() {
+
+        if (
+          content.style.display === "none"
+        ) {
+
+          content.style.display = "block";
+          toggle.textContent = "−";
+
+        }
+        else {
+
+          content.style.display = "none";
+          toggle.textContent = "+";
+
+        }
+
+      }
+    );
+
+    return div;
+
+  };
 
 
   legend.addTo(map);
