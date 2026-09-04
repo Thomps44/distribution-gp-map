@@ -585,9 +585,10 @@ let routeLayer = null;
 
  function convertirConcessionnaire(item) {
 
-  const fields =
-    item.fields || {};
-   console.log("FIELDS SHAREPOINT :", fields);
+  const fields = item.fields || {};
+
+console.log("FIELDS SHAREPOINT :", fields);
+console.log("CLÉS DISPONIBLES :", Object.keys(fields));
 
   return {
 
