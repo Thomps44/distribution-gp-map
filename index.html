@@ -1465,9 +1465,22 @@ function ajouterAItineraire(concessionnaire) {
 
   itineraire.push(concessionnaire);
 
-  afficherItineraire();
+afficherItineraire();
 
-  afficherConcessionnaires();
+// Mémoriser la position et le zoom actuels
+const centreActuel = map.getCenter();
+const zoomActuel = map.getZoom();
+
+afficherConcessionnaires();
+
+// Restaurer exactement la position et le zoom
+map.setView(
+  centreActuel,
+  zoomActuel,
+  {
+    animate: false
+  }
+);
 
   // Modifier visuellement le bouton du popup
   const bouton =
