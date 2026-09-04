@@ -789,7 +789,7 @@ let routeLayer = null;
       encodeURIComponent(siteId) +
       "/lists/" +
       encodeURIComponent(SHAREPOINT_LIST_NAME) +
-      "/items?expand=fields&$top=999";
+    "/items?expand=fields(select=*)&$top=999";
 
     const response =
       await fetch(
