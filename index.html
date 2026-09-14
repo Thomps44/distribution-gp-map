@@ -468,26 +468,30 @@
 </script>
 
 <script type="module">
-  import * as Leaflet from "leaflet";
-  import * as maplibregl from "maplibre-gl";
+ import * as Leaflet from "leaflet";
+import * as maplibregl from "maplibre-gl";
 
-  import {
-    maplibreGL
-  } from "https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/dist/leaflet-maplibre-gl.mjs";
+import {
+  maplibreGL
+} from "https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/dist/leaflet-maplibre-gl.mjs";
 
-  // Rendre Leaflet disponible pour ton application existante
-  window.L = Leaflet;
 
-  // Ajouter l'adaptateur MapLibre à notre objet Leaflet
-  window.L.maplibreGL = maplibreGL;
+// Créer un objet mutable contenant
+// toute l'API Leaflet + le plugin MapLibre
+window.L = {
+  ...Leaflet,
+  maplibreGL
+};
 
-  // Rendre MapLibre disponible globalement
-  window.maplibregl = maplibregl;
 
-  // Autoriser le démarrage de ton application
-  window.dispatchEvent(
-    new Event("maplibreReady")
-  );
+// MapLibre global
+window.maplibregl = maplibregl;
+
+
+// Signaler que tout est prêt
+window.dispatchEvent(
+  new Event("maplibreReady")
+);
 </script>
   
 <script>
