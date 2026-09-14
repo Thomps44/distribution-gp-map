@@ -460,13 +460,20 @@
 <!-- Leaflet -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<!-- MapLibre -->
-<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@6.9.0/dist/maplibre-gl.js"></script>
+<script type="module">
+  import * as maplibregl from "https://cdn.jsdelivr.net/npm/maplibre-gl@6.9.0/dist/maplibre-gl.mjs";
 
-<!-- MapLibre → Leaflet -->
-<script src="https://cdn.jsdelivr.net/npm/@maplibre/maplibre-gl-leaflet@0.1.3/leaflet-maplibre-gl.js"></script>
+  window.maplibregl = maplibregl;
+
+  await import(
+    "https://cdn.jsdelivr.net/npm/@maplibre/maplibre-gl-leaflet@0.1.3/leaflet-maplibre-gl.js"
+  );
+
+  window.dispatchEvent(new Event("maplibreReady"));
+</script>
   
 <script>
+  window.addEventListener("maplibreReady", function () {
 
   // ==================================================
   // CONFIGURATION MICROSOFT
@@ -2465,7 +2472,7 @@ toggleMenu.addEventListener(
 
   }
 );
-  
+  });
 </script>
 
 </body>
