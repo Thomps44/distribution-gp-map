@@ -319,10 +319,28 @@
     overflow-y: auto;
   }
 
-  .controls.menu-ouvert {
+    .controls.menu-ouvert {
     display: block;
   }
 
+}
+
+/* --------------------------------------------------
+   LOGO MAPTOOLKIT
+-------------------------------------------------- */
+
+#maptoolkit-logo {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 1000;
+  display: block;
+}
+
+#maptoolkit-logo img {
+  height: 24px;
+  width: auto;
+  display: block;
 }
     
   </style>
@@ -330,6 +348,18 @@
 
 <body>
 
+<a
+  href="https://www.maptoolkit.org/"
+  target="_blank"
+  rel="noopener"
+  id="maptoolkit-logo"
+>
+  <img
+    src="https://www.maptoolkit.org/assets/maptoolkit-attribution.png"
+    alt="Maptoolkit"
+  >
+</a>
+  
 <div id="map"></div>
 
 <button id="toggleMenu" class="toggle-menu">
